@@ -15,4 +15,20 @@ TimeSeries.prototype.addDataPoint = function(data, instant) {
   });
 };
 
+TimeSeries.prototype.fetchDataPoint = function(code) {
+  return new Promise((resolve, reject) => {
+    MongoClient.connect(this.url, (err, db) => {
+      db
+        .collection('DataPoint')
+        .findOne({ _id: code })
+        .then(mongoResult => {
+          console.log(mongoResult);
+          const result = mongoResult;
+          resolve({ code: mongoResult._id, data: mongoResult.data, instant: mongoResult.instant });
+        })
+        .catch(console.log);
+    });
+  });
+};
+
 module.exports = url => new TimeSeries(url);

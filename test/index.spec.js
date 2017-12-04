@@ -21,17 +21,35 @@ describe('Time Series module', () => {
 
   it('allows to add a data point', done => {
     const data = { value: 42 };
-    const instant = new Date().getTime()
+    const instant = new Date().getTime();
     timeSeries.addDataPoint(data, instant).then(id => {
       db
         .collection('DataPoint')
         .find({ id })
         .toArray((err, docs) => {
           expect(docs.length).to.equal(1);
-          expect(docs[0]).to.deep.include({data: data, instant: instant});
+          expect(docs[0]).to.deep.include({ data: data, instant: instant });
           done();
         });
     });
+  });
+
+  it('allows to fetch a data point', done => {
+    const data = { value: 42 };
+    const instant = new Date().getTime();
+    const data2 = { value: 11 };
+    const instant2 = new Date().getTime();
+
+    db
+      .collection('DataPoint')
+      .insertMany([{ data, instant }, { data: data2, instant: instant2 }])
+      .then(({ insertedIds }) => {
+        timeSeries.fetchDataPoint(insertedIds[0]).then(dataPoint => {
+          expect(dataPoint).to.deep.equal({ code: insertedIds[0], data, instant });
+          done();
+        });
+      })
+      .catch(console.log);
   });
 
   after(() => {
