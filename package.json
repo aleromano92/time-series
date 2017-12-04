@@ -4,7 +4,7 @@
   "description": "A time series module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/index.spec.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/Axel92Dev/time-series#readme",
   "devDependencies": {
+    "chai": "^4.1.2",
     "mocha": "^4.0.1"
   },
   "dependencies": {
