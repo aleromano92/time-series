@@ -11,7 +11,7 @@ describe('Time Series module', () => {
   before(done => {
     MongoClient.connect(url, function(err, mongoInstance) {
       db = mongoInstance;
-      timeSeries = createTimeSeries(url);
+      timeSeries = createTimeSeries(db);
       done();
     });
   });

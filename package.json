@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Axel92Dev/time-series.git"
+    "db": "git+https://github.com/Axel92Dev/time-series.git"
   },
   "keywords": [
     "timeseries",
@@ -19,7 +19,7 @@
   "author": "",
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/Axel92Dev/time-series/issues"
+    "db": "https://github.com/Axel92Dev/time-series/issues"
   },
   "homepage": "https://github.com/Axel92Dev/time-series#readme",
   "devDependencies": {
