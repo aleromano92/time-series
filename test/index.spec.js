@@ -8,49 +8,38 @@ describe('Time Series module', () => {
   let db;
   let timeSeries;
 
-  before(done => {
-    MongoClient.connect(url, function(err, mongoInstance) {
-      db = mongoInstance;
-      timeSeries = createTimeSeries(db);
-      done();
-    });
+  before(async () => {
+    db = await MongoClient.connect(url);
+    timeSeries = createTimeSeries(db);
   });
 
-  beforeEach(done => {
-    db.collection('DataPoint').deleteMany({}, done);
+  beforeEach(async () => {
+    await db.collection('DataPoint').deleteMany({});
   });
 
-  it('allows to add a data point', done => {
+  it('allows to add a data point', async () => {
     const data = { value: 42 };
     const instant = new Date().getTime();
-    timeSeries.addDataPoint(data, instant).then(code => {
-      db
-        .collection('DataPoint')
-        .find({ _id: new ObjectID(code) })
-        .toArray((err, docs) => {
-          expect(docs.length).to.equal(1);
-          expect(docs[0]).to.deep.include({ data: data, instant: instant });
-          done();
-        });
-    });
+    const code = await timeSeries.addDataPoint(data, instant);
+    const docs = await db
+      .collection('DataPoint')
+      .find({ _id: new ObjectID(code) })
+      .toArray();
+    expect(docs.length).to.equal(1);
+    expect(docs[0]).to.deep.include({ data: data, instant: instant });
   });
 
-  it('allows to fetch a data point', done => {
+  it('allows to fetch a data point', async () => {
     const data = { value: 42 };
     const instant = new Date().getTime();
     const data2 = { value: 11 };
     const instant2 = new Date().getTime();
 
-    db
+    const { insertedIds } = await db
       .collection('DataPoint')
-      .insertMany([{ data, instant }, { data: data2, instant: instant2 }])
-      .then(({ insertedIds }) => {
-        timeSeries.fetchDataPoint(insertedIds[0]).then(dataPoint => {
-          expect(dataPoint).to.deep.equal({ code: insertedIds[0], data, instant });
-          done();
-        });
-      })
-      .catch(console.log);
+      .insertMany([{ data, instant }, { data: data2, instant: instant2 }]);
+    const dataPoint = await timeSeries.fetchDataPoint(insertedIds[0]);
+    expect(dataPoint).to.deep.equal({ code: insertedIds[0], data, instant });
   });
 
   after(() => {

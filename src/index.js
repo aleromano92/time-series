@@ -1,27 +1,17 @@
+'use strict'
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
 module.exports = db => {
 
-  function addDataPoint(data, instant) {
-    return new Promise((resolve, reject) => {
-      db.collection('DataPoint').insertOne({ data, instant }, (err, result) => {
-        resolve(result.insertedId.toHexString());
-      });
-    });
+  async function addDataPoint(data, instant) {
+    const result = await db.collection('DataPoint').insertOne({ data, instant });
+    return result.insertedId.toHexString();
   }
 
-  function fetchDataPoint(code) {
-    return new Promise((resolve, reject) => {
-      db
-        .collection('DataPoint')
-        .findOne({ _id: new ObjectID(code) })
-        .then(mongoResult => {
-          const result = mongoResult;
-          resolve({ code: mongoResult._id, data: mongoResult.data, instant: mongoResult.instant });
-        })
-        .catch(console.log);
-    });
+  async function fetchDataPoint(code) {
+    const result = await db.collection('DataPoint').findOne({ _id: new ObjectID(code) });
+    return { code: result._id, data: result.data, instant: result.instant };
   }
 
   return { addDataPoint, fetchDataPoint }
