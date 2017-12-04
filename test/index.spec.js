@@ -42,6 +42,20 @@ describe('Time Series module', () => {
     expect(dataPoint).to.deep.equal({ code: insertedIds[0], data, instant });
   });
 
+  it('throws an error if a data point is not present', async () => {
+    const data = { value: 42 };
+    const instant = new Date().getTime();
+
+    const { insertedIds } = await db.collection('DataPoint').insertOne({ data, instant });
+    // expect(await timeSeries.fetchDataPoint('123456789012345678901234')).to.throw();
+    try {
+      await timeSeries.fetchDataPoint('123456789012345678901234');
+    } catch (e) {
+      expect(e).to.be.instanceOf(Error);
+      expect(e.message).to.equal('Not found');
+    }
+  });
+
   after(() => {
     db.close();
   });
