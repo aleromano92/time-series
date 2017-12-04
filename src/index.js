@@ -1,14 +1,18 @@
 const MongoClient = require('mongodb').MongoClient;
-const url = 'mongodb://localhost:27017/timeseries-test';
 
-function addDataPoint(data, time) {
+function TimeSeries(url) {
+  this.url = url;
+}
+
+TimeSeries.prototype.addDataPoint = function(data, instant) {
+  console.log(this.url);
   return new Promise((resolve, reject) => {
-    MongoClient.connect(url, (err, db) => {
-      db.collection('DataPoint').insertOne({data: data, instant: time}, (err, result) => {
+    MongoClient.connect(this.url, (err, db) => {
+      db.collection('DataPoint').insertOne({ data, instant }, (err, result) => {
         resolve(result._id);
       });
     });
   });
-}
+};
 
-module.exports = { addDataPoint };
+module.exports = url => new TimeSeries(url);

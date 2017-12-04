@@ -1,14 +1,16 @@
 const expect = require('chai').expect;
-const timeSeries = require('../src/index');
+const createTimeSeries = require('../src/index');
 const MongoClient = require('mongodb').MongoClient;
 
 describe('Time Series module', () => {
   const url = 'mongodb://localhost:27017/timeseries-test';
   let db;
+  let timeSeries;
 
   before(done => {
     MongoClient.connect(url, function(err, mongoInstance) {
       db = mongoInstance;
+      timeSeries = createTimeSeries(url);
       done();
     });
   });
