@@ -1,6 +1,7 @@
 const expect = require('chai').expect;
 const createTimeSeries = require('../src/index');
 const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
 
 describe('Time Series module', () => {
   const url = 'mongodb://localhost:27017/timeseries-test';
@@ -22,10 +23,10 @@ describe('Time Series module', () => {
   it('allows to add a data point', done => {
     const data = { value: 42 };
     const instant = new Date().getTime();
-    timeSeries.addDataPoint(data, instant).then(id => {
+    timeSeries.addDataPoint(data, instant).then(code => {
       db
         .collection('DataPoint')
-        .find({ id })
+        .find({ _id: new ObjectID(code) })
         .toArray((err, docs) => {
           expect(docs.length).to.equal(1);
           expect(docs[0]).to.deep.include({ data: data, instant: instant });
