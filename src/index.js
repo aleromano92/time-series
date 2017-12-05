@@ -1,11 +1,23 @@
 'use strict';
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
+const { Writable } = require('stream');
 
 module.exports = db => {
   async function addDataPoint(data, instant) {
     const result = await db.collection('DataPoint').insertOne({ data, instant });
     return result.insertedId.toHexString();
+  }
+
+  function createWriteStream() {
+    const writable = new Writable({
+      objectMode: true,
+      write(chunk, enc, cb) {
+        db.collection('DataPoint').insertOne(chunk , cb)
+      }
+    })
+
+    return writable
   }
 
   async function fetchDataPoint(code) {
@@ -18,5 +30,5 @@ module.exports = db => {
     }
   }
 
-  return { addDataPoint, fetchDataPoint };
+  return { addDataPoint, fetchDataPoint, createWriteStream };
 };

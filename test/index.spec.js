@@ -2,6 +2,8 @@ const expect = require('chai').expect;
 const createTimeSeries = require('../src/index');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
+const { Readable } = require('stream');
+const pump = require('pump');
 
 describe('Time Series module', () => {
   const url = 'mongodb://localhost:27017/timeseries-test';
@@ -56,7 +58,37 @@ describe('Time Series module', () => {
     }
   });
 
-  after(() => {
-    db.close();
+  it('allows to add datapoints using streams', done => {
+    const readable = new Readable({
+      objectMode: true,
+      read(n) {
+        this.push({ data: 'ciao', instant: new Date().getTime() });
+        this.push({ data: 'come', instant: new Date().getTime() });
+        this.push({ data: 'stai', instant: new Date().getTime() });
+
+        this.push(null);
+      }
+    });
+
+    const writableTimeSeries = timeSeries.createWriteStream()
+
+    pump(readable, writableTimeSeries, err => {
+      db
+        .collection('DataPoint')
+        .find()
+        .toArray()
+        .then(docs => {
+          expect(docs.length).to.equal(3);
+          expect(docs[0].data).to.equal('ciao');
+          expect(docs[1].data).to.equal('come');
+          expect(docs[2].data).to.equal('stai');
+          done();
+        })
+        .catch(done);
+    });
+  });
+
+  after(async () => {
+    await db.close();
   });
 });
