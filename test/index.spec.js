@@ -2,7 +2,7 @@ const expect = require('chai').expect;
 const createTimeSeries = require('../src/index');
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
-const { Readable } = require('stream');
+const { Readable, Writable } = require('stream');
 const pump = require('pump');
 
 describe('Time Series module', () => {
@@ -70,7 +70,7 @@ describe('Time Series module', () => {
       }
     });
 
-    const writableTimeSeries = timeSeries.createWriteStream()
+    const writableTimeSeries = timeSeries.createWriteStream();
 
     pump(readable, writableTimeSeries, err => {
       db
@@ -86,6 +86,48 @@ describe('Time Series module', () => {
         })
         .catch(done);
     });
+  });
+
+  it('allows to fetch datapoints using streams', done => {
+    const datapoints = [
+      { data: 'ciao', instant: new Date().getTime(), _id: 1 },
+      { data: 'come', instant: new Date().getTime(), _id: 2 },
+      { data: 'stai', instant: new Date().getTime(), _id: 3 }
+    ];
+
+    const untouchedDatapoints =  [
+      { data: 'ciao', instant: new Date().getTime() },
+      { data: 'come', instant: new Date().getTime() },
+      { data: 'stai', instant: new Date().getTime() }
+    ];
+
+    db
+      .collection('DataPoint')
+      .insertMany(datapoints)
+      .then(({ insertedIds }) => {
+        const expectedDatapoints = [
+          Object.assign({ code: datapoints[0]._id }, untouchedDatapoints[0]),
+          Object.assign({ code: datapoints[1]._id }, untouchedDatapoints[1]),
+          Object.assign({ code: datapoints[2]._id }, untouchedDatapoints[2])
+        ];
+
+        const actualDataPoints = [];
+        const writable = new Writable({
+          objectMode: true,
+          write(chunk, enc, cb) {
+            actualDataPoints.push(chunk);
+            cb();
+          }
+        });
+
+        const readableTimeSeries = timeSeries.createReadStream();
+
+        pump(readableTimeSeries, writable, err => {
+          expect(expectedDatapoints).to.deep.equal(actualDataPoints);
+          done();
+        });
+      })
+      .catch(done);
   });
 
   after(async () => {

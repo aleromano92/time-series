@@ -1,34 +1,47 @@
-'use strict';
-const MongoClient = require('mongodb').MongoClient;
-const ObjectID = require('mongodb').ObjectID;
-const { Writable } = require('stream');
+'use strict'
+const ObjectID = require('mongodb').ObjectID
+const { Writable, Transform } = require('stream')
 
 module.exports = db => {
-  async function addDataPoint(data, instant) {
-    const result = await db.collection('DataPoint').insertOne({ data, instant });
-    return result.insertedId.toHexString();
+  async function addDataPoint (data, instant) {
+    const result = await db.collection('DataPoint').insertOne({ data, instant })
+    return result.insertedId.toHexString()
   }
 
-  function createWriteStream() {
+  async function fetchDataPoint (code) {
+    const result = await db.collection('DataPoint').findOne({ _id: new ObjectID(code) })
+
+    if (result) {
+      return { code: result._id, data: result.data, instant: result.instant }
+    } else {
+      throw new Error('Not found')
+    }
+  }
+
+  function createWriteStream () {
     const writable = new Writable({
       objectMode: true,
-      write(chunk, enc, cb) {
-        db.collection('DataPoint').insertOne(chunk , cb)
+      write (chunk, enc, cb) {
+        db.collection('DataPoint').insertOne(chunk, cb)
       }
     })
 
     return writable
   }
 
-  async function fetchDataPoint(code) {
-    const result = await db.collection('DataPoint').findOne({ _id: new ObjectID(code) });
+  function createReadStream () {
+    const transform = new Transform({
+      objectMode: true,
+      transform (chunk, encoding, callback) {
+        this.push({ code: chunk._id, data: chunk.data, instant: chunk.instant })
+        callback()
+      }
+    })
 
-    if (result) {
-      return { code: result._id, data: result.data, instant: result.instant };
-    } else {
-      throw new Error('Not found');
-    }
+    const readable = db.collection('DataPoint').find()
+
+    return readable.pipe(transform)
   }
 
-  return { addDataPoint, fetchDataPoint, createWriteStream };
-};
+  return { addDataPoint, fetchDataPoint, createReadStream, createWriteStream }
+}
